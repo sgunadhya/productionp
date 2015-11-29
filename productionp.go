@@ -1,9 +1,9 @@
 package productionp
-import (
-	"os"
-	"log"
-)
 
+import (
+	"log"
+	"os"
+)
 
 type MPSInput struct {
 	forecasts         []int
@@ -19,7 +19,6 @@ type MPSOutput struct {
 	setup_cost   float32
 	total_cost   float32
 }
-
 
 func Level(forecasts []int, initial int) int {
 	total := 0
@@ -41,15 +40,15 @@ func LevelWithMinimumInventory(forecasts []int, initial int, minimum int) int {
 func Chase(forecasts []int, initial int, minimum int) []int {
 	productions := make([]int, len(forecasts))
 	for _, val := range forecasts {
-		if (initial <= minimum) {
+		if initial <= minimum {
 			productions = append(productions, val)
-		}else {
-			if (val < initial) {
+		} else {
+			if val < initial {
 				initial -= val
 				productions = append(productions, 0)
-			}else {
+			} else {
 				initial = minimum
-				productions = append(productions, val - (initial - minimum))
+				productions = append(productions, val-(initial-minimum))
 			}
 		}
 	}
@@ -57,7 +56,7 @@ func Chase(forecasts []int, initial int, minimum int) []int {
 }
 
 func SilverMeal(mps_input MPSInput) MPSOutput {
-	logger := log.New(os.Stderr, "DEBUG: ", log.Ldate | log.Ltime)
+	logger := log.New(os.Stderr, "DEBUG: ", log.Ldate|log.Ltime)
 	plan := make([]int, len(mps_input.forecasts))
 	previous_cost := float32(0.0)
 	current_cost := float32(0)
@@ -77,12 +76,12 @@ func SilverMeal(mps_input MPSInput) MPSOutput {
 		unit := 1
 		for ; j < len(mps_input.forecasts); j++ {
 			logger.Printf("Previous cost : %.2f", previous_cost)
-			current_cost = (trc + float32(unit) * mps_input.holding_cost * float32(mps_input.forecasts[j])) / float32(unit + 1)
+			current_cost = (trc + float32(unit)*mps_input.holding_cost*float32(mps_input.forecasts[j])) / float32(unit+1)
 			logger.Printf("Current cost for operation for period %d check %d is : %.2f", i, unit, current_cost)
 			logger.Printf("Previous cost for operation for period %d check %d is : %.2f", i, unit, previous_cost)
-			if (previous_cost < current_cost) {
+			if previous_cost < current_cost {
 				break
-			}else {
+			} else {
 				holding_cost := float32(unit) * mps_input.holding_cost * float32(mps_input.forecasts[j])
 				trc += holding_cost
 				total_holding_cost += holding_cost
@@ -90,16 +89,13 @@ func SilverMeal(mps_input MPSInput) MPSOutput {
 				logger.Printf("Current cost %.2f, holding cost: %.2f , order : %d", trc, holding_cost, order)
 			}
 			previous_cost = current_cost
-			unit++;
+			unit++
 		}
 		plan[i] = order
 		i = j
 	}
 	logger.Printf("%v ", plan)
 	logger.Printf("Total holding cost :%.2f, Total Order Cost : .2f", total_holding_cost, total_setup_cost)
-	return MPSOutput{plan:plan, total_cost:total_holding_cost + total_setup_cost,
-		holding_cost:total_holding_cost, setup_cost:total_setup_cost}
+	return MPSOutput{plan: plan, total_cost: total_holding_cost + total_setup_cost,
+		holding_cost: total_holding_cost, setup_cost: total_setup_cost}
 }
-
-
-

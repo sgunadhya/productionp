@@ -35,7 +35,7 @@ func TestChase(t *testing.T) {
 
 func TestSilverMeal(t *testing.T) {
 	mps := MPSInput{forecasts: []int{120, 130, 100, 150},
-		initial_inventory:0, minimum_inventory:0, holding_cost:5.0, order_cost:600.0}
+		initial_inventory: 0, minimum_inventory: 0, holding_cost: 5.0, order_cost: 600.0}
 
 	output := SilverMeal(mps)
 	if 4 != len(output.plan) {
