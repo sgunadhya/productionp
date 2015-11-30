@@ -37,22 +37,22 @@ func LevelWithMinimumInventory(forecasts []int, initial int, minimum int) int {
 	return (total - (initial - minimum)) / len(forecasts)
 }
 
-func Chase(forecasts []int, initial int, minimum int) []int {
-	productions := make([]int, len(forecasts))
-	for _, val := range forecasts {
-		if initial <= minimum {
+func Chase(input MPSInput) MPSOutput {
+	productions := make([]int, len(input.forecasts))
+	for _, val := range input.forecasts {
+		if input.initial_inventory <= input.minimum_inventory {
 			productions = append(productions, val)
 		} else {
-			if val < initial {
-				initial -= val
+			if val < input.initial_inventory {
+				input.initial_inventory -= val
 				productions = append(productions, 0)
 			} else {
-				initial = minimum
-				productions = append(productions, val-(initial-minimum))
+				input.initial_inventory = input.minimum_inventory
+				productions = append(productions, val-(input.initial_inventory-input.minimum_inventory))
 			}
 		}
 	}
-	return productions
+	return MPSOutput{plan: productions}
 }
 
 func SilverMeal(mps_input MPSInput) MPSOutput {
