@@ -77,5 +77,8 @@ func TestWalterWhitin(t *testing.T) {
 	if 150 != output.plan[3] {
 		t.Fatalf(" Expected fourth output is %d but got %d", 120, output.plan[3])
 	}
+}
+
+func TestMILP(t *testing.T) {
 
 }
