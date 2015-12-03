@@ -38,21 +38,21 @@ func LevelWithMinimumInventory(forecasts []int, initial int, minimum int) int {
 }
 
 func Chase(input MPSInput) MPSOutput {
-	productions := make([]int, len(input.forecasts))
+	production_plans := make([]int, len(input.forecasts))
 	for _, val := range input.forecasts {
 		if input.initial_inventory <= input.minimum_inventory {
-			productions = append(productions, val)
+			production_plans = append(production_plans, val)
 		} else {
 			if val < input.initial_inventory {
 				input.initial_inventory -= val
-				productions = append(productions, 0)
+				production_plans = append(production_plans, 0)
 			} else {
 				input.initial_inventory = input.minimum_inventory
-				productions = append(productions, val-(input.initial_inventory-input.minimum_inventory))
+				production_plans = append(production_plans, val-(input.initial_inventory-input.minimum_inventory))
 			}
 		}
 	}
-	return MPSOutput{plan: productions}
+	return MPSOutput{plan: production_plans}
 }
 
 func SilverMeal(mps_input MPSInput) MPSOutput {
@@ -102,7 +102,7 @@ func SilverMeal(mps_input MPSInput) MPSOutput {
 
 func WagnerWhitin(input MPSInput) MPSOutput {
 	dynamic_table := make([][]float32, len(input.forecasts))
-	result := make([]int, len(input.forecasts))
+	production_plans := make([]int, len(input.forecasts))
 
 	calculate := func(forecasts []int, setup_cost float32, holding_cost float32) float32 {
 		total_cost := setup_cost
@@ -110,15 +110,6 @@ func WagnerWhitin(input MPSInput) MPSOutput {
 			total_cost += float32(i) * float32(forecasts[i]) * holding_cost
 		}
 		return total_cost
-	}
-	minimum := func(list []float32) float32 {
-		min_val := float32(10000000)
-		for _, val := range list {
-			if val < min_val {
-				min_val = val
-			}
-		}
-		return min_val
 	}
 	minimumWithIndex := func(list []float32) (float32, int) {
 		min_val := float32(10000000)
@@ -136,7 +127,8 @@ func WagnerWhitin(input MPSInput) MPSOutput {
 		dynamic_table[i] = make([]float32, i+1)
 		dynamic_table[i][0] = calculate(input.forecasts[:i+1], input.order_cost, input.holding_cost)
 		for j := 0; j < i; j++ {
-			dynamic_table[i][j+1] = calculate(input.forecasts[j+1:i+1], input.order_cost, input.holding_cost) + minimum(dynamic_table[j])
+			minimum_val, _ := minimumWithIndex(dynamic_table[j])
+			dynamic_table[i][j+1] = calculate(input.forecasts[j+1:i+1], input.order_cost, input.holding_cost) + minimum_val
 		}
 	}
 	order_quantity := 0
@@ -146,14 +138,14 @@ func WagnerWhitin(input MPSInput) MPSOutput {
 		_, i := minimumWithIndex(dynamic_table[j])
 		order_quantity += input.forecasts[j]
 		if i == j {
-			result[j] = order_quantity
+			production_plans[j] = order_quantity
 			order_quantity = 0
 			total_setup_amount += input.order_cost
 		} else {
-			result[j] = 0
+			production_plans[j] = 0
 		}
 
 	}
 
-	return MPSOutput{plan: result, setup_cost: total_setup_amount}
+	return MPSOutput{plan: production_plans, setup_cost: total_setup_amount}
 }
