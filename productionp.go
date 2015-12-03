@@ -1,6 +1,7 @@
 package productionp
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -148,4 +149,30 @@ func WagnerWhitin(input MPSInput) MPSOutput {
 	}
 
 	return MPSOutput{plan: production_plans, setup_cost: total_setup_amount}
+}
+
+func DiscreteAvailableToPromise(forecasts []int, production_plans []int, committed_orders []int, inventory_on_hand int) []int {
+	atp := make([]int, len(forecasts))
+	atp[0] = inventory_on_hand
+	committed_next_run := 0
+
+	for i := 0; i < len(forecasts); {
+		committed_next_run = committed_orders[i]
+		j := i + 1
+		for ; j < len(forecasts); j++ {
+			fmt.Printf("j ....%d", j)
+			if production_plans[j] == 0 {
+				break
+			} else {
+				committed_next_run += committed_orders[j]
+			}
+		}
+		fmt.Printf("///// %v \n", committed_next_run)
+		atp[i] = production_plans[i] - committed_next_run
+		i = j
+		committed_next_run = 0
+	}
+
+	return atp
+
 }

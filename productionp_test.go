@@ -1,6 +1,7 @@
 package productionp
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -79,6 +80,7 @@ func TestWalterWhitin(t *testing.T) {
 	}
 }
 
-func TestMILP(t *testing.T) {
-
+func TestAvailableToPromise(t *testing.T) {
+	atp := DiscreteAvailableToPromise([]int{150, 130, 100, 120}, []int{350, 0, 0, 150}, []int{100, 75, 50, 25}, 50)
+	fmt.Printf("%v \n", atp)
 }
