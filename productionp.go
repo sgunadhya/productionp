@@ -40,20 +40,56 @@ func LevelWithMinimumInventory(forecasts []int, initial int, minimum int) int {
 
 func Chase(input MPSInput) MPSOutput {
 	production_plans := make([]int, len(input.forecasts))
+	order_cost := float32(0.0)
+	holding_cost := float32(0.0)
+	holding_counter := 1
 	for _, val := range input.forecasts {
 		if input.initial_inventory <= input.minimum_inventory {
 			production_plans = append(production_plans, val)
+			order_cost += input.order_cost
+			holding_counter = 1
 		} else {
 			if val < input.initial_inventory {
 				input.initial_inventory -= val
 				production_plans = append(production_plans, 0)
+				holding_counter++
+				holding_cost += float32(holding_counter) * input.holding_cost * float32(val)
 			} else {
 				input.initial_inventory = input.minimum_inventory
 				production_plans = append(production_plans, val-(input.initial_inventory-input.minimum_inventory))
+				order_cost += input.order_cost
+				holding_counter = 1
 			}
 		}
 	}
-	return MPSOutput{plan: production_plans}
+	return MPSOutput{plan: production_plans, holding_cost: holding_cost, setup_cost: order_cost, total_cost: holding_cost + order_cost}
+}
+
+func EOQStrategy(input MPSInput, eoq int) MPSOutput {
+	production_plans := make([]int, len(input.forecasts))
+	inventory_on_hand := input.initial_inventory
+	holding_counter := 0
+	total_holding_cost := float32(0.0)
+	total_setup_cost := float32(0.0)
+
+	for i := 0; i < len(input.forecasts); i++ {
+		if inventory_on_hand < input.forecasts[i] {
+			production_plans[i] = eoq
+			total_setup_cost += input.order_cost
+			holding_counter = 1
+			inventory_on_hand += eoq
+		} else {
+			production_plans[i] = 0
+			holding_counter++
+			total_holding_cost += float32(holding_counter) * input.holding_cost * float32(input.forecasts[i])
+		}
+		inventory_on_hand -= input.forecasts[i]
+
+	}
+
+	fmt.Printf("%v   \n", production_plans)
+	total_cost := total_holding_cost + total_setup_cost
+	return MPSOutput{plan: production_plans, total_cost: total_cost}
 }
 
 func SilverMeal(mps_input MPSInput) MPSOutput {
@@ -134,21 +170,25 @@ func WagnerWhitin(input MPSInput) MPSOutput {
 	}
 	order_quantity := 0
 	total_setup_amount := float32(0)
+	fmt.Printf("%v \n", dynamic_table)
+	min_index := len(input.forecasts)
+	total_cost, _ := minimumWithIndex(dynamic_table[len(input.forecasts)-1])
 
 	for j := len(input.forecasts) - 1; j >= 0; j-- {
-		_, i := minimumWithIndex(dynamic_table[j])
-		order_quantity += input.forecasts[j]
-		if i == j {
+		if min_index < len(dynamic_table[j])-1 {
+			production_plans[j] = 0
+			continue
+		} else {
+			_, i := minimumWithIndex(dynamic_table[j])
+			order_quantity += input.forecasts[j]
+			min_index = i
 			production_plans[j] = order_quantity
 			order_quantity = 0
 			total_setup_amount += input.order_cost
-		} else {
-			production_plans[j] = 0
 		}
-
 	}
 
-	return MPSOutput{plan: production_plans, setup_cost: total_setup_amount}
+	return MPSOutput{plan: production_plans, setup_cost: total_setup_amount, total_cost: total_cost}
 }
 
 func DiscreteAvailableToPromise(forecasts []int, production_plans []int, committed_orders []int, inventory_on_hand int) []int {
