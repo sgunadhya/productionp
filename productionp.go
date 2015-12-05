@@ -201,14 +201,13 @@ func DiscreteAvailableToPromise(forecasts []int, production_plans []int, committ
 		j := i + 1
 		for ; j < len(forecasts); j++ {
 			fmt.Printf("j ....%d", j)
-			if production_plans[j] == 0 {
+			if production_plans[j] != 0 {
 				break
 			} else {
 				committed_next_run += committed_orders[j]
 			}
 		}
-		fmt.Printf("///// %v \n", committed_next_run)
-		atp[i] = production_plans[i] - committed_next_run
+		atp[i] += production_plans[i] - committed_next_run
 		i = j
 		committed_next_run = 0
 	}
