@@ -56,7 +56,7 @@ func Chase(input MPSInput) MPSOutput {
 	return MPSOutput{plan: production_plans}
 }
 
-func SilverMeal(mps_input MPSInput) MPSOutput {
+func SilverMealAlgorithm(mps_input MPSInput) MPSOutput {
 	logger := log.New(os.Stderr, "DEBUG: ", log.Ldate|log.Ltime)
 	plan := make([]int, len(mps_input.forecasts))
 	previous_cost := float32(0.0)
@@ -101,7 +101,7 @@ func SilverMeal(mps_input MPSInput) MPSOutput {
 		holding_cost: total_holding_cost, setup_cost: total_setup_cost}
 }
 
-func WagnerWhitin(input MPSInput) MPSOutput {
+func WagnerWhitinAlgorithm(input MPSInput) MPSOutput {
 	dynamic_table := make([][]float32, len(input.forecasts))
 	production_plans := make([]int, len(input.forecasts))
 

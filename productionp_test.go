@@ -40,7 +40,7 @@ func TestSilverMeal(t *testing.T) {
 	mps := MPSInput{forecasts: []int{120, 130, 100, 150},
 		initial_inventory: 0, minimum_inventory: 0, holding_cost: 5.0, order_cost: 600.0}
 
-	output := SilverMeal(mps)
+	output := SilverMealAlgorithm(mps)
 	if 4 != len(output.plan) {
 		t.Fatalf(" Expected length of plan is : %d but got %d", 4, len(output.plan))
 	}
@@ -62,7 +62,7 @@ func TestSilverMeal(t *testing.T) {
 func TestWalterWhitin(t *testing.T) {
 	mps := MPSInput{forecasts: []int{120, 130, 100, 150},
 		initial_inventory: 0, minimum_inventory: 0, holding_cost: 5.0, order_cost: 600.0}
-	output := WagnerWhitin(mps)
+	output := WagnerWhitinAlgorithm(mps)
 	if 4 != len(output.plan) {
 		t.Fatalf(" Expected length of plan is : %d but got %d", 4, len(output.plan))
 	}
