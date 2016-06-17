@@ -81,6 +81,14 @@ func TestWalterWhitin(t *testing.T) {
 }
 
 func TestAvailableToPromise(t *testing.T) {
-	atp := DiscreteAvailableToPromise([]int{150, 130, 100, 120}, []int{350, 0, 0, 150}, []int{100, 75, 50, 25}, 50)
-	fmt.Printf("%v \n", atp)
+	atp := DiscreteAvailableToPromise([]int{1500, 1550, 1600, 1550, 1450, 1400, 1400, 1450, 1400, 1500},
+		[]int{6100, 0, 0, 0, 5700, 0, 0, 0, 3000, 0}, []int{800, 750, 1400, 1300, 1000, 970, 980, 850, 750, 700}, 500)
+
+	fmt.Printf("\nThe ATP is : %v \n", atp)
+}
+
+func TestProblems(t *testing.T) {
+	//mps := MPSInput{forecasts:[]int{3000,3100,3200,3100,2900,2800,2800,2900,2800,3000}, holding_cost:0.1,order_cost:800}
+	mps := MPSInput{forecasts: []int{300, 280, 200, 190, 160, 210}, holding_cost: 2, order_cost: 1000}
+	fmt.Printf("%v \n", EOQStrategy(mps, 470))
 }
