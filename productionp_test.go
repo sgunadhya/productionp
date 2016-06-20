@@ -30,7 +30,7 @@ func TestChase(t *testing.T) {
 	forecasts := []int{120, 130, 100, 150}
 	initial := 10
 	minimum_invetory := 10
-	chase := Chase(MPSInput{forecasts: forecasts, initial_inventory: initial, minimum_inventory: minimum_invetory})
+	chase := ChaseAlgorithm(MPSInput{forecasts: forecasts, initial_inventory: initial, minimum_inventory: minimum_invetory})
 	if 0 != chase.plan[0] {
 		t.Fatalf("Expected %d but got %d", 12, chase.plan[1])
 	}

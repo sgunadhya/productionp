@@ -38,7 +38,7 @@ func LevelWithMinimumInventory(forecasts []int, initial int, minimum int) int {
 	return (total - (initial - minimum)) / len(forecasts)
 }
 
-func Chase(input MPSInput) MPSOutput {
+func ChaseAlgorithm(input MPSInput) MPSOutput {
 	production_plans := make([]int, len(input.forecasts))
 	order_cost := float32(0.0)
 	holding_cost := float32(0.0)
