@@ -7,18 +7,18 @@ import (
 )
 
 type MPSInput struct {
-	forecasts         []int
-	minimum_inventory int
-	initial_inventory int
-	holding_cost      float32
-	order_cost        float32
+	forecasts        []int
+	minimumInventory int
+	initialInventory int
+	holdingCost      float32
+	orderCost        float32
 }
 
 type MPSOutput struct {
-	plan         []int
-	holding_cost float32
-	setup_cost   float32
-	total_cost   float32
+	plan        []int
+	holdingCost float32
+	setupCost   float32
+	totalCost   float32
 }
 
 func Level(forecasts []int, initial int) int {
@@ -39,177 +39,177 @@ func LevelWithMinimumInventory(forecasts []int, initial int, minimum int) int {
 }
 
 func ChaseAlgorithm(input MPSInput) MPSOutput {
-	production_plans := make([]int, len(input.forecasts))
-	order_cost := float32(0.0)
-	holding_cost := float32(0.0)
-	holding_counter := 1
+	productionPlans := make([]int, len(input.forecasts))
+	orderCost := float32(0.0)
+	holdingCost := float32(0.0)
+	holdingCounter := 1
 	for _, val := range input.forecasts {
-		if input.initial_inventory <= input.minimum_inventory {
-			production_plans = append(production_plans, val)
-			order_cost += input.order_cost
-			holding_counter = 1
+		if input.initialInventory <= input.minimumInventory {
+			productionPlans = append(productionPlans, val)
+			orderCost += input.orderCost
+			holdingCounter = 1
 		} else {
-			if val < input.initial_inventory {
-				input.initial_inventory -= val
-				production_plans = append(production_plans, 0)
-				holding_counter++
-				holding_cost += float32(holding_counter) * input.holding_cost * float32(val)
+			if val < input.initialInventory {
+				input.initialInventory -= val
+				productionPlans = append(productionPlans, 0)
+				holdingCounter++
+				holdingCost += float32(holdingCounter) * input.holdingCost * float32(val)
 			} else {
-				input.initial_inventory = input.minimum_inventory
-				production_plans = append(production_plans, val-(input.initial_inventory-input.minimum_inventory))
-				order_cost += input.order_cost
-				holding_counter = 1
+				input.initialInventory = input.minimumInventory
+				productionPlans = append(productionPlans, val-(input.initialInventory-input.minimumInventory))
+				orderCost += input.orderCost
+				holdingCounter = 1
 			}
 		}
 	}
-	return MPSOutput{plan: production_plans, holding_cost: holding_cost, setup_cost: order_cost, total_cost: holding_cost + order_cost}
+	return MPSOutput{plan: productionPlans, holdingCost: holdingCost, setupCost: orderCost, totalCost: holdingCost + orderCost}
 }
 
 func EOQStrategy(input MPSInput, eoq int) MPSOutput {
-	production_plans := make([]int, len(input.forecasts))
-	inventory_on_hand := input.initial_inventory
-	holding_counter := 0
-	total_holding_cost := float32(0.0)
-	total_setup_cost := float32(0.0)
+	productionPlans := make([]int, len(input.forecasts))
+	inventoryOnHand := input.initialInventory
+	holdingCounter := 0
+	totalHoldingCost := float32(0.0)
+	totalSetupCost := float32(0.0)
 
 	for i := 0; i < len(input.forecasts); i++ {
-		if inventory_on_hand < input.forecasts[i] {
-			production_plans[i] = eoq
-			total_setup_cost += input.order_cost
-			holding_counter = 1
-			inventory_on_hand += eoq
+		if inventoryOnHand < input.forecasts[i] {
+			productionPlans[i] = eoq
+			totalSetupCost += input.orderCost
+			holdingCounter = 1
+			inventoryOnHand += eoq
 		} else {
-			production_plans[i] = 0
-			holding_counter++
-			total_holding_cost += float32(holding_counter) * input.holding_cost * float32(input.forecasts[i])
+			productionPlans[i] = 0
+			holdingCounter++
+			totalHoldingCost += float32(holdingCounter) * input.holdingCost * float32(input.forecasts[i])
 		}
-		inventory_on_hand -= input.forecasts[i]
+		inventoryOnHand -= input.forecasts[i]
 
 	}
 
-	fmt.Printf("%v   \n", production_plans)
-	total_cost := total_holding_cost + total_setup_cost
-	return MPSOutput{plan: production_plans, total_cost: total_cost}
+	fmt.Printf("%v   \n", productionPlans)
+	totalCost := totalHoldingCost + totalSetupCost
+	return MPSOutput{plan: productionPlans, totalCost: totalCost}
 }
 
-func SilverMealAlgorithm(mps_input MPSInput) MPSOutput {
+func SilverMealAlgorithm(mpsInput MPSInput) MPSOutput {
 	logger := log.New(os.Stderr, "DEBUG: ", log.Ldate|log.Ltime)
-	plan := make([]int, len(mps_input.forecasts))
-	previous_cost := float32(0.0)
-	current_cost := float32(0)
-	total_holding_cost := float32(0.0)
-	total_setup_cost := float32(0.0)
+	plan := make([]int, len(mpsInput.forecasts))
+	previousCost := float32(0.0)
+	currentCost := float32(0)
+	totalHoldingCost := float32(0.0)
+	totalSetupCost := float32(0.0)
 	trc := float32(0.0)
 	order := 0
 	logger.Printf("Starting the computation ")
 
-	for i := 0; i < len(mps_input.forecasts); {
-		logger.Printf("Computing for period %d current cost : %.2f, previous cost: .2f", i, current_cost, previous_cost)
-		trc = mps_input.order_cost
-		previous_cost = trc
-		total_setup_cost += trc
-		order = mps_input.forecasts[i]
+	for i := 0; i < len(mpsInput.forecasts); {
+		logger.Printf("Computing for period %d current cost : %.2f, previous cost: %.2f", i, currentCost, previousCost)
+		trc = mpsInput.orderCost
+		previousCost = trc
+		totalSetupCost += trc
+		order = mpsInput.forecasts[i]
 		j := i + 1
 		unit := 1
-		for ; j < len(mps_input.forecasts); j++ {
-			logger.Printf("Previous cost : %.2f", previous_cost)
-			current_cost = (trc + float32(unit)*mps_input.holding_cost*float32(mps_input.forecasts[j])) / float32(unit+1)
-			logger.Printf("Current cost for operation for period %d check %d is : %.2f", i, unit, current_cost)
-			logger.Printf("Previous cost for operation for period %d check %d is : %.2f", i, unit, previous_cost)
-			if previous_cost < current_cost {
+		for ; j < len(mpsInput.forecasts); j++ {
+			logger.Printf("Previous cost : %.2f", previousCost)
+			currentCost = (trc + float32(unit)*mpsInput.holdingCost*float32(mpsInput.forecasts[j])) / float32(unit+1)
+			logger.Printf("Current cost for operation for period %d check %d is : %.2f", i, unit, currentCost)
+			logger.Printf("Previous cost for operation for period %d check %d is : %.2f", i, unit, previousCost)
+			if previousCost < currentCost {
 				break
 			} else {
-				holding_cost := float32(unit) * mps_input.holding_cost * float32(mps_input.forecasts[j])
-				trc += holding_cost
-				total_holding_cost += holding_cost
-				order += mps_input.forecasts[j]
-				logger.Printf("Current cost %.2f, holding cost: %.2f , order : %d", trc, holding_cost, order)
+				holdingCost := float32(unit) * mpsInput.holdingCost * float32(mpsInput.forecasts[j])
+				trc += holdingCost
+				totalHoldingCost += holdingCost
+				order += mpsInput.forecasts[j]
+				logger.Printf("Current cost %.2f, holding cost: %.2f , order : %d", trc, holdingCost, order)
 			}
-			previous_cost = current_cost
+			previousCost = currentCost
 			unit++
 		}
 		plan[i] = order
 		i = j
 	}
 	logger.Printf("%v ", plan)
-	logger.Printf("Total holding cost :%.2f, Total Order Cost : %.2f", total_holding_cost, total_setup_cost)
-	return MPSOutput{plan: plan, total_cost: total_holding_cost + total_setup_cost,
-		holding_cost: total_holding_cost, setup_cost: total_setup_cost}
+	logger.Printf("Total holding cost :%.2f, Total Order Cost : %.2f", totalHoldingCost, totalSetupCost)
+	return MPSOutput{plan: plan, totalCost: totalHoldingCost + totalSetupCost,
+		holdingCost: totalHoldingCost, setupCost: totalSetupCost}
 }
 
 func WagnerWhitinAlgorithm(input MPSInput) MPSOutput {
-	dynamic_table := make([][]float32, len(input.forecasts))
-	production_plans := make([]int, len(input.forecasts))
+	dynamicTable := make([][]float32, len(input.forecasts))
+	productionPlans := make([]int, len(input.forecasts))
 
-	calculate := func(forecasts []int, setup_cost float32, holding_cost float32) float32 {
-		total_cost := setup_cost
+	calculate := func(forecasts []int, setupCost float32, holdingCost float32) float32 {
+		totalCost := setupCost
 		for i := 1; i < len(forecasts); i++ {
-			total_cost += float32(i) * float32(forecasts[i]) * holding_cost
+			totalCost += float32(i) * float32(forecasts[i]) * holdingCost
 		}
-		return total_cost
+		return totalCost
 	}
 	minimumWithIndex := func(list []float32) (float32, int) {
-		min_val := float32(10000000)
+		minVal := float32(10000000)
 		index := -1
 		for i, val := range list {
-			if val < min_val {
-				min_val = val
+			if val < minVal {
+				minVal = val
 				index = i
 			}
 		}
-		return min_val, index
+		return minVal, index
 	}
 
 	for i := 0; i < len(input.forecasts); i++ {
-		dynamic_table[i] = make([]float32, i+1)
-		dynamic_table[i][0] = calculate(input.forecasts[:i+1], input.order_cost, input.holding_cost)
+		dynamicTable[i] = make([]float32, i+1)
+		dynamicTable[i][0] = calculate(input.forecasts[:i+1], input.orderCost, input.holdingCost)
 		for j := 0; j < i; j++ {
-			minimum_val, _ := minimumWithIndex(dynamic_table[j])
-			dynamic_table[i][j+1] = calculate(input.forecasts[j+1:i+1], input.order_cost, input.holding_cost) + minimum_val
+			minimumVal, _ := minimumWithIndex(dynamicTable[j])
+			dynamicTable[i][j+1] = calculate(input.forecasts[j+1:i+1], input.orderCost, input.holdingCost) + minimumVal
 		}
 	}
-	order_quantity := 0
-	total_setup_amount := float32(0)
-	fmt.Printf("%v \n", dynamic_table)
-	min_index := len(input.forecasts)
-	total_cost, _ := minimumWithIndex(dynamic_table[len(input.forecasts)-1])
+	orderQuantity := 0
+	totalSetupAmount := float32(0)
+	fmt.Printf("%v \n", dynamicTable)
+	minIndex := len(input.forecasts)
+	totalCost, _ := minimumWithIndex(dynamicTable[len(input.forecasts)-1])
 
 	for j := len(input.forecasts) - 1; j >= 0; j-- {
-		if min_index < len(dynamic_table[j])-1 {
-			production_plans[j] = 0
+		if minIndex < len(dynamicTable[j])-1 {
+			productionPlans[j] = 0
 			continue
 		} else {
-			_, i := minimumWithIndex(dynamic_table[j])
-			order_quantity += input.forecasts[j]
-			min_index = i
-			production_plans[j] = order_quantity
-			order_quantity = 0
-			total_setup_amount += input.order_cost
+			_, i := minimumWithIndex(dynamicTable[j])
+			orderQuantity += input.forecasts[j]
+			minIndex = i
+			productionPlans[j] = orderQuantity
+			orderQuantity = 0
+			totalSetupAmount += input.orderCost
 		}
 	}
 
-	return MPSOutput{plan: production_plans, setup_cost: total_setup_amount, total_cost: total_cost}
+	return MPSOutput{plan: productionPlans, setupCost: totalSetupAmount, totalCost: totalCost}
 }
 
-func DiscreteAvailableToPromise(forecasts []int, production_plans []int, committed_orders []int, inventory_on_hand int) []int {
+func DiscreteAvailableToPromise(forecasts []int, productionPlans []int, committedOrders []int, inventoryOnHand int) []int {
 	atp := make([]int, len(forecasts))
-	atp[0] = inventory_on_hand
-	committed_next_run := 0
+	atp[0] = inventoryOnHand
+	committedNextRun := 0
 
 	for i := 0; i < len(forecasts); {
-		committed_next_run = committed_orders[i]
+		committedNextRun = committedOrders[i]
 		j := i + 1
 		for ; j < len(forecasts); j++ {
 			fmt.Printf("j ....%d", j)
-			if production_plans[j] != 0 {
+			if productionPlans[j] != 0 {
 				break
 			} else {
-				committed_next_run += committed_orders[j]
+				committedNextRun += committedOrders[j]
 			}
 		}
-		atp[i] += production_plans[i] - committed_next_run
+		atp[i] += productionPlans[i] - committedNextRun
 		i = j
-		committed_next_run = 0
+		committedNextRun = 0
 	}
 
 	return atp
